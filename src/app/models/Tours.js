@@ -1,4 +1,6 @@
-const connection = require('../../config/db');
+const pool = require('../../config/db');
+const Price = require('./Price');
+const Image = require('./Image');
 
 // Constructor
 const Tour = function (tour) {
@@ -15,10 +17,11 @@ const Tour = function (tour) {
     this.start_time = tour.start_time;
     this.status = tour.status;
     this.time = tour.time;
+    this.price = tour.price;
 };
 
 Tour.create = (newTour, result) => {
-    connection.query('INSERT INTO tour SET ?', newTour, (err, res) => {
+    pool.query('INSERT INTO tour SET ? ', newTour, (err, res) => {
         if (err) {
             console.log('error: ', err);
             result(err, null);
@@ -30,18 +33,31 @@ Tour.create = (newTour, result) => {
     });
 };
 
-Tour.getAll = (name, result) => {
-    let query = 'SELECT * FROM Tour';
+Tour.getAll = (name, top, result) => {
+    let query = `SELECT * FROM tour`;
 
-    if (name) {
-        query += ` WHERE name LIKE '%${name}%'`;
+    console.log(top);
+
+    if (top) {
+        query += `LIMIT ${top}`;
     }
 
-    connection.query(query, (err, res) => {
+    if (name) {
+        query += `WHERE name LIKE '%${name}%'`;
+    }
+
+    pool.query(query, async (err, res) => {
         if (err) {
             console.log('error: ', err);
             result(null, err);
             return;
+        }
+
+        for (var i = 0; i < res.length; i++) {
+            const price = await Price.getByTourId(res[i].id);
+            const image = await Image.getByTourId(res[i].id);
+            res[i].price = price;
+            res[i].image = image;
         }
 
         console.log('Tours: ', res);
@@ -50,7 +66,7 @@ Tour.getAll = (name, result) => {
 };
 
 Tour.findById = (id, result) => {
-    connection.query(`SELECT * FROM Tour WHERE id=${id}`, (err, res) => {
+    pool.query(`SELECT * FROM Tour WHERE id=${id}`, (err, res) => {
         if (err) {
             console.log('error: ', err);
             result(null, err);
@@ -58,8 +74,8 @@ Tour.findById = (id, result) => {
         }
 
         if (res.length) {
-            console.log('found Tour: ', res);
-            result(null, res);
+            console.log('found Tour: ', res[0]);
+            result(null, res[0]);
             return;
         }
 
@@ -68,7 +84,7 @@ Tour.findById = (id, result) => {
 };
 
 Tour.updateById = (id, tour, result) => {
-    connection.query(
+    pool.query(
         `UPDATE Tour SET name = ?, 
     code_tour = ?, 
     description = ?,

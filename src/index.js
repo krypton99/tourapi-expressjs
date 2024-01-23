@@ -3,6 +3,13 @@ const morgan = require('morgan');
 const app = express();
 const port = 3001;
 const bodyParser = require('body-parser');
+const cors = require('cors');
+
+var corsOptions = {
+    origin: 'http://localhost:3000',
+};
+
+app.use(cors(corsOptions));
 
 const route = require('./routes');
 

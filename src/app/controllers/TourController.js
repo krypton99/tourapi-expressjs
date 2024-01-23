@@ -3,7 +3,7 @@ const Tour = require('../models/Tours');
 class TourController {
     //[GET] api/tours/
     getTours(req, res, next) {
-        Tour.getAll('', (err, data) => {
+        Tour.getAll('', req.query.top, (err, data) => {
             if (err) {
                 res.status(500).send({
                     message: err.message || 'Some err occured',
