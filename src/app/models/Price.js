@@ -51,16 +51,19 @@ Price.getById = (id, result) => {
     });
 };
 
-Price.getByTourId = (tourId) => {
+Price.getByTourId = (tourId, primary) => {
     return new Promise((resolve, reject) => {
-        pool.query(
-            `SELECT * FROM price WHERE tour_id=${tourId}`,
-            (err, res) => {
-                if (err) {
-                    reject(err);
-                } else resolve(res);
-            },
-        );
+        let query = `SELECT * FROM price WHERE tour_id=${tourId}`;
+
+        const isPrimary = ['0', '1'].includes(primary) ? primary : undefined;
+
+        if (isPrimary !== undefined) query += ` AND is_primary= ${isPrimary} `;
+
+        pool.query(query, (err, res) => {
+            if (err) {
+                reject(err);
+            } else resolve(res);
+        });
     });
 };
 

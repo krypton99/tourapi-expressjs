@@ -14,7 +14,8 @@ class PriceController {
 
     //[GET] api/price/?tourId=
     getPriceByTourId(req, res, next) {
-        Price.getByTourId(req.query.tourId)
+        console.log(typeof parseInt(req.query.primary));
+        Price.getByTourId(req.query.tourId, req.query.primary)
             .then((price) => res.json(price))
             .catch(next);
     }

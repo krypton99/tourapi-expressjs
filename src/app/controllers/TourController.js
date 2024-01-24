@@ -1,27 +1,40 @@
 const Tour = require('../models/Tours');
+const json = require('../../helper/json');
+
+const prisma = require('../../prisma');
 
 class TourController {
     //[GET] api/tours/
     getTours(req, res, next) {
-        Tour.getAll('', req.query.top, (err, data) => {
-            if (err) {
-                res.status(500).send({
-                    message: err.message || 'Some err occured',
-                });
-            } else res.json(data);
-        });
+        prisma.tour
+            .findMany({
+                include: {
+                    price: {
+                        where: {
+                            is_primary: 1,
+                        },
+                    },
+                    image: true,
+                },
+            })
+            .then((data) => {
+                res.send(json(data));
+            })
+            .catch(next);
     }
 
     //[GET] api/tours/:id
     getTourById(req, res, next) {
-        Tour.findById(req.params.id, (err, data) => {
-            if (err) {
-                res.status(500).send({
-                    message:
-                        err.message || 'Some err occured while get tour by id',
-                });
-            } else res.json(data);
-        });
+        prisma.tour
+            .findUnique({
+                where: {
+                    id: req.params.id,
+                },
+            })
+            .then((data) => {
+                res.send(json(data));
+            })
+            .catch(next);
     }
 
     //[POST] api/tours

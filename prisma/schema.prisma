@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model comment {
+  id       BigInt    @id
+  content  String?   @db.Text
+  time     DateTime? @db.DateTime(6)
+  posts_id BigInt?
+  user_id  BigInt?
+  posts    posts?    @relation(fields: [posts_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK32egq4fwmd2pb4cy0efr2o25a")
+  user     user?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK8kcum44fvpupyw6f5baccx25c")
+
+  @@index([posts_id], map: "FK32egq4fwmd2pb4cy0efr2o25a")
+  @@index([user_id], map: "FK8kcum44fvpupyw6f5baccx25c")
+}
+
+model contact {
+  id             BigInt       @id
+  email          String?      @db.VarChar(255)
+  id_card_number String?      @db.VarChar(255)
+  name           String?      @db.Text
+  phone          String?      @db.VarChar(255)
+  order_tour     order_tour[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model favorite {
+  user_id BigInt
+  tour_id BigInt
+  user    user   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKh3f2dg11ibnht4fvnmx60jcif")
+  tour    tour   @relation(fields: [tour_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKqal18amt2tvak1ny1vn1tnbai")
+
+  @@index([user_id], map: "FKh3f2dg11ibnht4fvnmx60jcif")
+  @@index([tour_id], map: "FKqal18amt2tvak1ny1vn1tnbai")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model hibernate_sequence {
+  next_val BigInt?
+
+  @@ignore
+}
+
+model image {
+  id       BigInt  @id
+  image    String? @db.Text
+  posts_id BigInt?
+  tour_id  BigInt?
+  posts    posts?  @relation(fields: [posts_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKc4qa7it0ows67htdlfxu93sy")
+  tour     tour?   @relation(fields: [tour_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKmbgj1irf3sy7672g02dedrea")
+
+  @@index([posts_id], map: "FKc4qa7it0ows67htdlfxu93sy")
+  @@index([tour_id], map: "FKmbgj1irf3sy7672g02dedrea")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model like_post {
+  user_id    BigInt
+  comment_id BigInt
+  posts      posts  @relation(fields: [comment_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKqfa6y4gmlc0qf79cr5a01sfv")
+  user       user   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKrub77t61jwevsytkws4hqytqe")
+
+  @@index([comment_id], map: "FKqfa6y4gmlc0qf79cr5a01sfv")
+  @@index([user_id], map: "FKrub77t61jwevsytkws4hqytqe")
+  @@ignore
+}
+
+model order_detail {
+  id            BigInt      @id
+  amount        Int
+  price         BigInt
+  order_tour_id BigInt?
+  price_id      BigInt?
+  priceForOne         price?      @relation(fields: [price_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKahowijhvlaheqsgchw6nfgpdo")
+  order_tour    order_tour? @relation(fields: [order_tour_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKi93jtdynnydylfkjlw55oirc2")
+
+  @@index([price_id], map: "FKahowijhvlaheqsgchw6nfgpdo")
+  @@index([order_tour_id], map: "FKi93jtdynnydylfkjlw55oirc2")
+}
+
+model order_tour {
+  id           BigInt         @id
+  order_date   DateTime?      @db.DateTime(6)
+  total_price  BigInt
+  contact_id   BigInt?
+  tour_id      BigInt?
+  user_id      BigInt?
+  order_detail order_detail[]
+  tour         tour?          @relation(fields: [tour_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKb3geapfbmy6fc2e9e3opohf1w")
+  user         user?          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKbovlt9sr3lpqpqoq3k3gt11ap")
+  contact      contact?       @relation(fields: [contact_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKdu4anwyxl8etpdtbr55ldyrgh")
+
+  @@index([tour_id], map: "FKb3geapfbmy6fc2e9e3opohf1w")
+  @@index([user_id], map: "FKbovlt9sr3lpqpqoq3k3gt11ap")
+  @@index([contact_id], map: "FKdu4anwyxl8etpdtbr55ldyrgh")
+}
+
+model posts {
+  id             BigInt      @id
+  amount_comment Int
+  amount_like    Int
+  content        String?     @db.Text
+  name_user      String?     @db.VarChar(255)
+  time           DateTime?   @db.DateTime(6)
+  user_id        BigInt?
+  comment        comment[]
+  image          image[]
+  like_post      like_post[] @ignore
+  user           user?       @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKam8ar6luvp8afhfu20gfsydo9")
+
+  @@index([user_id], map: "FKam8ar6luvp8afhfu20gfsydo9")
+}
+
+model price {
+  id           BigInt         @id
+  price        BigInt
+  is_primary   Int?           @db.TinyInt
+  type         String?        @db.Text
+  tour_id      BigInt?
+  order_detail order_detail[]
+  tour         tour?          @relation(fields: [tour_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKqbh95qydtqwll3jynbt8ifs6k")
+
+  @@index([tour_id], map: "FKqbh95qydtqwll3jynbt8ifs6k")
+}
+
+model schedule {
+  id      BigInt    @id
+  place   String?   @db.Text
+  time    DateTime? @db.DateTime(6)
+  tour_id BigInt?
+  tour    tour?     @relation(fields: [tour_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK636amcceyg7sxd04x8j99qv18")
+
+  @@index([tour_id], map: "FK636amcceyg7sxd04x8j99qv18")
+}
+
+model tour {
+  id               BigInt       @id @default(autoincrement())
+  avatar_tour      String?      @db.Text
+  code_tour        String?      @db.VarChar(255)
+  description      String?      @db.Text
+  discount_percent Int
+  end_place        String?      @db.Text
+  end_time         DateTime?    @db.DateTime(6)
+  name             String?      @db.Text
+  national         String?      @db.Text
+  province         String?      @db.Text
+  start_place      String?      @db.Text
+  start_time       DateTime?    @db.DateTime(6)
+  status           String?      @db.VarChar(255)
+  time             String?      @db.VarChar(255)
+  favorite         favorite[]   @ignore
+  image            image[]
+  order_tour       order_tour[]
+  price            price[]
+  schedule         schedule[]
+}
+
+model user {
+  id         BigInt       @id
+  name       String?      @db.Text
+  password   String?      @db.VarChar(255)
+  phone      String?      @db.VarChar(255)
+  token      String?      @db.VarChar(255)
+  username   String?      @db.VarChar(255)
+  comment    comment[]
+  favorite   favorite[]   @ignore
+  like_post  like_post[]  @ignore
+  order_tour order_tour[]
+  posts      posts[]
+}
