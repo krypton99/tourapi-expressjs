@@ -1,4 +1,5 @@
 const pool = require('../../config/db');
+const prisma = require('../../prisma');
 
 function Price(price) {
     this.price = price.price;
@@ -20,17 +21,16 @@ Price.getAll = (result) => {
     });
 };
 
-Price.create = (newPrice, result) => {
-    pool.query('INSERT INTO price SET ?', newPrice, (err, res) => {
-        if (err) {
-            console.log('error: ', err);
-            result(err, null);
-            return;
-        }
-
-        console.log('created price: ', { id: res.insertId, ...newPrice });
-        result(null, { id: res.insertId, ...newPrice });
-    });
+Price.create = async (newPrice) => {
+    const options = {
+        data: {
+            tour_id: parseInt(newPrice.tour_id),
+            is_primary: parseInt(newPrice.is_primary),
+            price: parseInt(newPrice.price),
+            type: newPrice.type,
+        },
+    };
+    return await prisma.price.create(options);
 };
 
 Price.getById = (id, result) => {
@@ -51,20 +51,24 @@ Price.getById = (id, result) => {
     });
 };
 
-Price.getByTourId = (tourId, primary) => {
-    return new Promise((resolve, reject) => {
-        let query = `SELECT * FROM price WHERE tour_id=${tourId}`;
+Price.getAll = async (tourId, primary) => {
+    primary = ['0', '1'].includes(primary) ? primary : undefined;
+    const options = {};
 
-        const isPrimary = ['0', '1'].includes(primary) ? primary : undefined;
+    if (tourId) {
+        options.where = {
+            tour_id: tourId,
+        };
+    }
 
-        if (isPrimary !== undefined) query += ` AND is_primary= ${isPrimary} `;
-
-        pool.query(query, (err, res) => {
-            if (err) {
-                reject(err);
-            } else resolve(res);
-        });
-    });
+    if (typeof primary !== 'undefined') {
+        options.where = {
+            ...options.where,
+            is_primary: parseInt(primary),
+        };
+    }
+    console.log(options);
+    return await prisma.price.findMany(options);
 };
 
 module.exports = Price;
