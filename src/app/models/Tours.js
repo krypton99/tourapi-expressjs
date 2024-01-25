@@ -2,6 +2,8 @@ const pool = require('../../config/db');
 const Price = require('./Price');
 const Image = require('./Image');
 
+const prisma = require('../../prisma');
+
 // Constructor
 const Tour = function (tour) {
     this.avatar_tour = tour.avatar_tour;
@@ -17,112 +19,85 @@ const Tour = function (tour) {
     this.start_time = tour.start_time;
     this.status = tour.status;
     this.time = tour.time;
-    this.price = tour.price;
 };
 
-Tour.create = (newTour, result) => {
-    pool.query('INSERT INTO tour SET ? ', newTour, (err, res) => {
-        if (err) {
-            console.log('error: ', err);
-            result(err, null);
-            return;
-        }
-
-        console.log('created tour: ', { id: res.insertId, ...newTour });
-        result(null, { id: res.insertId, ...newTour });
-    });
-};
-
-Tour.getAll = (name, top, result) => {
-    let query = `SELECT * FROM tour`;
-
-    console.log(top);
-
-    if (top) {
-        query += `LIMIT ${top}`;
-    }
-
-    if (name) {
-        query += `WHERE name LIKE '%${name}%'`;
-    }
-
-    pool.query(query, async (err, res) => {
-        if (err) {
-            console.log('error: ', err);
-            result(null, err);
-            return;
-        }
-
-        for (var i = 0; i < res.length; i++) {
-            const price = await Price.getByTourId(res[i].id);
-            const image = await Image.getByTourId(res[i].id);
-            res[i].price = price;
-            res[i].image = image;
-        }
-
-        console.log('Tours: ', res);
-        result(null, res);
-    });
-};
-
-Tour.findById = (id, result) => {
-    pool.query(`SELECT * FROM Tour WHERE id=${id}`, (err, res) => {
-        if (err) {
-            console.log('error: ', err);
-            result(null, err);
-            return;
-        }
-
-        if (res.length) {
-            console.log('found Tour: ', res[0]);
-            result(null, res[0]);
-            return;
-        }
-
-        result({ kind: 'not_found' }, null);
-    });
-};
-
-Tour.updateById = (id, tour, result) => {
-    pool.query(
-        `UPDATE Tour SET name = ?, 
-    code_tour = ?, 
-    description = ?,
-    discount_percent = ?,
-    avatar_tour = ?,
-    end_time = ?,
-    end_place = ?,
-    start_time = ?,
-    status = ?,
-    time = ?,
-    national = ?,
-    province = ?
-    WHERE id=${id}`,
-        [
-            tour.name,
-            tour.code_tour,
-            tour.description,
-            tour.discount_percent,
-            tour.avatar_tour,
-            tour.end_time,
-            tour.end_place,
-            tour.start_time,
-            tour.status,
-            tour.time,
-            tour.national,
-            tour.province,
-        ],
-        (err, res) => {
-            if (err) {
-                console.log('error: ', err);
-                result(err, null);
-                return;
-            }
-
-            console.log('tour updated: ', { id, ...tour });
-            result(null, { id, ...tour });
+Tour.create = async (newTour, newPrice, newImage) => {
+    const createOptions = {
+        data: {
+            ...newTour,
         },
-    );
+    };
+
+    if (newPrice) {
+        createOptions.data.price = {
+            create: {
+                is_primary: parseInt(newPrice.isPrimary),
+                price: parseInt(newPrice.price),
+                type: newPrice.type,
+            },
+        };
+    }
+    if (newImage) {
+        createOptions.data.image = {
+            create: {
+                image: newImage.image,
+            },
+        };
+    }
+    return await prisma.tour.create(createOptions);
+};
+
+Tour.getAll = async (name, top) => {
+    let take = parseInt(top);
+    take = typeof take === 'number' && take;
+    const options = {
+        where: {
+            name: {
+                contains: name,
+            },
+        },
+        include: {
+            price: {
+                where: {
+                    is_primary: 1,
+                },
+            },
+            image: true,
+        },
+    };
+    if (take) {
+        options.take = take;
+    }
+    return await prisma.tour.findMany(options);
+};
+
+Tour.findById = async (id) => {
+    const options = {
+        where: {
+            id,
+        },
+        include: {
+            price: {
+                where: {
+                    is_primary: 1,
+                },
+            },
+            image: true,
+        },
+    };
+    return await prisma.tour.findUnique(options);
+};
+
+Tour.updateById = async (id, tour) => {
+    const options = {
+        where: {
+            id,
+        },
+        data: {
+            ...tour,
+        },
+    };
+    return await prisma.tour.update(options);
 };
 
 module.exports = Tour;

@@ -49,7 +49,7 @@ model hibernate_sequence {
 }
 
 model image {
-  id       BigInt  @id
+  id       BigInt  @id @default(autoincrement())
   image    String? @db.Text
   posts_id BigInt?
   tour_id  BigInt?
@@ -78,7 +78,7 @@ model order_detail {
   price         BigInt
   order_tour_id BigInt?
   price_id      BigInt?
-  priceForOne         price?      @relation(fields: [price_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKahowijhvlaheqsgchw6nfgpdo")
+  priceForOne   price?      @relation(fields: [price_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKahowijhvlaheqsgchw6nfgpdo")
   order_tour    order_tour? @relation(fields: [order_tour_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKi93jtdynnydylfkjlw55oirc2")
 
   @@index([price_id], map: "FKahowijhvlaheqsgchw6nfgpdo")
@@ -119,7 +119,7 @@ model posts {
 }
 
 model price {
-  id           BigInt         @id
+  id           BigInt         @id @default(autoincrement())
   price        BigInt
   is_primary   Int?           @db.TinyInt
   type         String?        @db.Text
