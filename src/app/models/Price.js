@@ -33,22 +33,13 @@ Price.create = async (newPrice) => {
     return await prisma.price.create(options);
 };
 
-Price.getById = (id, result) => {
-    pool.query(`SELECT * FROM price WHERE id=${id}`, (err, res) => {
-        if (err) {
-            console.log('error: ', err);
-            result(null, err);
-            return;
-        }
-
-        if (res.length) {
-            console.log('found price: ', res[0]);
-            result(null, res[0]);
-            return;
-        }
-
-        result({ kind: 'not_found' }, null);
-    });
+Price.getById = async (id) => {
+    const options = {
+        where: {
+            id,
+        },
+    };
+    return await prisma.price.findUnique(options);
 };
 
 Price.getAll = async (tourId, primary) => {
@@ -69,6 +60,27 @@ Price.getAll = async (tourId, primary) => {
     }
     console.log(options);
     return await prisma.price.findMany(options);
+};
+
+Price.delete = async (id) => {
+    const options = {
+        where: {
+            id,
+        },
+    };
+    return await prisma.price.delete(options);
+};
+
+Price.update = async (id, data) => {
+    const options = {
+        where: {
+            id,
+        },
+        data: {
+            ...data,
+        },
+    };
+    return await prisma.price.update(options);
 };
 
 module.exports = Price;
